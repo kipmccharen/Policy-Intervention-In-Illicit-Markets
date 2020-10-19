@@ -217,3 +217,4 @@ split_df = pd.DataFrame(splitup, columns=["quantities", "costs"])
 startval = 1
 rangevals = list(range(startval,startval+59))
 df_donation_only.iloc[rangevals]
+#db.userdetails.find({"education":"M.C.A."},{"user_id" : 0}).pretty();
