@@ -130,3 +130,9 @@ dmypy.json
 .pyre/
 
 data/
+*.ppk
+*.pem
+
+.gitignore_dir/
+.ipynb_checkpoints/
+.vscode/
