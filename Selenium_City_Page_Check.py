@@ -319,6 +319,60 @@ def scrape_user_ad_page(driver, url, savepicshere):
             next_review["review"] = x
     return user_dict
 
+def collect_page_URLs_by_location(locationlist, baseURL, chrome_driver, right_xpath):
+    # vessel variables to accumulate content
+    html_list = [] #html content for each scrolled page of ad cards
+    card_data = [] #card data extracted from html pages
+
+    max_item_num = 0
+    for itt, loc in enumerate(locationlist):
+        print(loc)
+        url = baseURL + loc #put base URL before page extension for full URL
+        src_htmls = extract_html_per_card_page(chrome_driver, url, right_xpath)
+        for html in src_htmls:
+            sub_dict_list, new_max = soup_extract_cards(html, max_item_num)
+            max_item_num = new_max
+            card_data += sub_dict_list
+            print(len(card_data), "total user page items")
+        
+        df = pd.DataFrame(card_data)
+        df.to_csv(save_user_page_urls_here.replace(".csv", str(itt) + ".csv"), index=False) #
+
+        html_list += src_htmls
+        print(len(src_htmls), " new html docs")
+        print(len(html_list), " total html docs")
+
+    #for each page of ad listings, extract the info for each listing
+    print("extracting ad listings from html")
+    for html in src_htmls:
+        sub_dict_list, new_max = soup_extract_cards(html, max_item_num)
+        max_item_num = new_max
+        card_data += sub_dict_list
+        print(len(card_data), "user page items")
+
+    return card_data
+
+def accumulate_user_page_content(user_page_list, chrome_driver, baseURL, savepicshere):
+    # vessel variable to accumulate content
+    outputlist = []
+
+    # For each user's page, scrape content
+    for i, upl in enumerate(user_page_list):
+        sub_start_time = time.perf_counter()
+        try:
+            # scrape an individual page
+            userdict = scrape_user_ad_page(chrome_driver, \
+                baseURL + upl, \
+                savepicshere)
+
+            outputlist.append(userdict)
+            subtimediff = str(round(time.perf_counter() - sub_start_time, 1)).zfill(3)
+            print(f"user page {i} --- {subtimediff}s sec. elapsed ---")
+        except:
+            print("error, did not save")
+
+    return outputlist
+
 if __name__ == "__main__":
     ############################
     #Section 1: Starting Conditions
@@ -343,52 +397,21 @@ if __name__ == "__main__":
     chrome_driver = start_driver(chrome_dr, \
         testpage1, firstclick, runheadless = True)
 
-    # ############################
-    # #Section 2: Accumulate Page URLs by location page
+    ############################
+    #Section 2: Accumulate Page URLs by location page
 
-    # #get location-based page extensions
-    # loc_df = pd.read_csv(location_data)
-    # locationlist = loc_df["href"].values.tolist()
-    # #locationlist = [testpage1] #test with 1 location
-    # #locationlist = locationlist[:3]
+    #get location-based page extensions
+    loc_df = pd.read_csv(location_data)
+    locationlist = loc_df["href"].values.tolist()
+    #locationlist = [testpage1] #test with 1 location
+    #locationlist = locationlist[:3]
 
-    # # vessel variables to accumulate content
-    # html_list = [] #html content for each scrolled page of ad cards
-    # card_data = [] #card data extracted from html pages
+    card_data = collect_page_URLs_by_location(locationlist, baseURL, chrome_driver, right_xpath)
+    df = pd.DataFrame(card_data)
 
-    # max_item_num = 0
-    # for itt, loc in enumerate(locationlist):
-    #     print(loc)
-    #     url = baseURL + loc #put base URL before page extension for full URL
-    #     src_htmls = extract_html_per_card_page(chrome_driver, url, right_xpath)
-    #     for html in src_htmls:
-    #         sub_dict_list, new_max = soup_extract_cards(html, max_item_num)
-    #         max_item_num = new_max
-    #         card_data += sub_dict_list
-    #         print(len(card_data), "total user page items")
-        
-    #     df = pd.DataFrame(card_data)
-    #     df.to_csv(save_user_page_urls_here.replace(".csv", str(itt) + ".csv"), index=False) #
-
-    #     # html_list += src_htmls
-    #     # print(len(src_htmls), " new html docs")
-    #     # print(len(html_list), " total html docs")
-
-    # # #for each page of ad listings, extract the info for each listing
-    # # print("extracting ad listings from html")
-    # # for html in src_htmls:
-    # #     sub_dict_list, new_max = soup_extract_cards(html, max_item_num)
-    # #     max_item_num = new_max
-    # #     card_data += sub_dict_list
-    # #     print(len(card_data), "user page items")
-
-    # # df = pd.DataFrame(card_data)
-    # # print(len(df.index), " user page URLs")
-    # # print(df.head())
-    # # df.to_csv(save_user_page_urls_here, index=False)
-    
-
-
+    print(len(df.index), " user page URLs")
+    print(df.head())
+    df.to_csv(save_user_page_urls_here, index=False)
 
     ############################
     #Section 3: Accumulate content for each user page
@@ -399,24 +422,7 @@ if __name__ == "__main__":
     #user_page_list = user_page_list[:5]
     #user_page_list = [testpage2] # testing w 1 page
 
-    # vessel variable to accumulate content
-    outputlist = []
-
-    # For each user's page, scrape content
-    for i, upl in enumerate(user_page_list):
-        sub_start_time = time.perf_counter()
-        try:
-            # scrape an individual page
-            userdict = scrape_user_ad_page(chrome_driver, \
-                baseURL + upl, \
-                savepicshere)
-
-            outputlist.append(userdict)
-            subtimediff = str(round(time.perf_counter() - sub_start_time, 1)).zfill(3)
-            print(f"user page {i} --- {subtimediff}s sec. elapsed ---")
-        except:
-            print("error, did not save")
-
+    outputlist = accumulate_user_page_content(user_page_list, chrome_driver, baseURL, savepicshere)
     # convert list of dictionaries to a spreadsheet and export
     df = pd.DataFrame(outputlist)
     df.to_csv(save_user_page_content_here, index=False, encoding="utf-8")

@@ -547,20 +547,20 @@ if __name__ == "__main__":
     search_cond = generate_searchlist(search_df, t_us_base)
     url_list = list(search_cond.values())
 
-    # with open("test_urlbuild.txt", "a") as f:
-    #     f.write('\n'.join(url_list))
+    with open("test_urlbuild.txt", "a") as f:
+        f.write('\n'.join(url_list))
     
-    # print("collecting page contact cards")
-    # udat = overview_collect(exec_driver, t_us_base, search_cond)
-    #card_filenm = f"data_contact_cards_{start_time}.csv"
-    # udat.to_csv(card_filenm)
+    print("collecting page contact cards")
+    udat = overview_collect(exec_driver, t_us_base, search_cond)
+    card_filenm = f"data_contact_cards_{start_time}.csv"
+    udat.to_csv(card_filenm)
 
-    # udat = pd.read_csv(card_filenm)
-    # ulist = udat.url.tolist()
-    # udata = collect_user_pages(baseURL, \
-    #             ulist, \
-    #             exec_driver)
+    udat = pd.read_csv(card_filenm)
+    ulist = udat.url.tolist()
+    udata = collect_user_pages(baseURL, \
+                ulist, \
+                exec_driver)
 
-    # full_df = pd.DataFrame(udata)
-    # full_df.to_csv(f"data_user_details_{start_time}.csv")
+    full_df = pd.DataFrame(udata)
+    full_df.to_csv(f"data_user_details_{start_time}.csv")
     print("--- %s seconds ---" % (datetime.now() - start_time1))
